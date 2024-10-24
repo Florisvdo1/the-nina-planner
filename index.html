@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emoji Day Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Styles -->
+    <style>
+        /* Global Styles */
+        body {
+            margin: 0;
+            font-family: 'Comic Sans MS', 'Arial', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            background-color: #ffffff;
+            color: #000000;
+            overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #fff;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .dark-mode .header {
+            background-color: #1e1e1e;
+        }
+        /* Clock Display */
+        .clock-display {
+            position: absolute;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .clock-icon {
+            margin-right: 8px;
+            font-size: 28px;
+        }
+        /* Sticky Button */
+        .sticky-button {
+            background-color: #007bff;
+            color: #fff;
+            border: 6px solid #ffd700;
+            border-radius: 12px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            margin-right: 6px;
+        }
+        .sticky-button:hover {
+            background-color: #0056b3;
+        }
+        .dark-mode .sticky-button {
+            background-color: #0056b3;
+        }
+        /* Theme Toggle */
+        .theme-toggle {
+            position: absolute;
+            right: 20px;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            font-size: 28px;
+            outline: none;
+            z-index: 1001;
+        }
+        /* Planner Grid */
+        .planner {
+            position: absolute;
+            top: 70px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-auto-rows: 80px;
+            padding-bottom: 100px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .time-slot {
+            border-bottom: 1px solid #ccc;
+            position: relative;
+            padding-left: 60px;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #6baed6, #4292c6);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-size: cover;
+        }
+        .dark-mode .time-slot {
+            background: linear-gradient(135deg, #4a89ac, #346b91);
+        }
+        .time-label {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .placeholder-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            height: 100%;
+            padding: 0 10px;
+        }
+        .placeholder {
+            width: 50px;
+            height: 50px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            position: relative;
+            transition: border-color 0.2s;
+            overflow: hidden; /* Ensure emojis don't overflow */
+        }
+        .placeholder.highlight {
+            border-color: #ff9800;
+        }
+        .emoji {
+            width: 100%;
+            height: 100%;
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        /* Control Buttons */
+        .control-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+        .control-button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            outline: none;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        .dark-mode .control-button {
+            background-color: #0056b3;
+        }
+        /* Emoji Palette */
+        .emoji-palette {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background-color: #f0f0f0;
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 320px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            z-index: 1500;
+            -webkit-overflow-scrolling: touch;
+        }
+        .dark-mode .emoji-palette {
+            background-color: #222222;
+            color: #ffffff;
+            border-color: #444444;
+        }
+        .emoji-palette .category {
+            margin-bottom: 10px;
+        }
+        .emoji-palette .category-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        .emoji-palette .emoji-option {
+            font-size: 32px;
+            margin: 5px;
+            cursor: pointer;
+            display: inline-block;
+            touch-action: none;
+        }
+        .hidden {
+            display: none;
+        }
+        /* Responsive Design */
+        @media (min-width: 600px) {
+            .planner {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 900px) {
+            .planner {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Clock and Sticky Button -->
+    <div class="header">
+        <!-- Clock Display -->
+        <div class="clock-display" id="clockDisplay">
+            <div class="clock-icon">🕒</div>
+            <div id="currentTime">Loading...</div>
+        </div>
+        <!-- Sticky Button -->
+        <a href="#" class="sticky-button" id="stickyButton">Plan My Day</a>
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="themeToggle">🌓</button>
+    </div>
+
+    <!-- Planner Grid -->
+    <div class="planner" id="planner">
+        <!-- Time Slots will be generated here -->
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+        <!-- Undo Button -->
+        <button class="control-button" id="undoBtn">↺</button>
+        <!-- Arrow Up Button -->
+        <button class="control-button" id="arrowUpBtn">⬆️</button>
+        <!-- Arrow Down Button -->
+        <button class="control-button" id="arrowDownBtn">⬇️</button>
+        <!-- Add Task Button -->
+        <button class="control-button" id="addTaskBtn">+</button>
+    </div>
+
+    <!-- Emoji Palette -->
+    <div class="emoji-palette hidden" id="emojiPalette">
+        <!-- Emojis will be populated here -->
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Clock Display
+        function updateTime() {
+            const clockDisplay = document.getElementById('currentTime');
+            const now = new Date();
+            // Convert to Amsterdam time
+            const amsterdamTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Amsterdam" }));
+            const hours = amsterdamTime.getHours().toString().padStart(2, '0');
+            const minutes = amsterdamTime.getMinutes().toString().padStart(2, '0');
+            const seconds = amsterdamTime.getSeconds().toString().padStart(2, '0');
+            clockDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Planner Initialization
+        const planner = document.getElementById('planner');
+        const timeSlots = [
+            '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
+            '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
+            '19:00', '20:00', '21:00', '22:00', '23:00', '23:59'
+        ];
+        timeSlots.forEach(time => {
+            const slot = document.createElement('div');
+            slot.className = 'time-slot';
+            slot.dataset.time = time;
+            const label = document.createElement('div');
+            label.className = 'time-label';
+            label.textContent = time;
+            slot.appendChild(label);
+            // Create placeholders
+            const placeholderContainer = document.createElement('div');
+            placeholderContainer.className = 'placeholder-container';
+            for (let i = 0; i < 4; i++) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'placeholder';
+                placeholder.dataset.index = i;
+                placeholder.addEventListener('touchstart', preventDefault, { passive: false });
+                placeholderContainer.appendChild(placeholder);
+            }
+            slot.appendChild(placeholderContainer);
+            planner.appendChild(slot);
+        });
+
+        // Emoji Palette
+        const emojiPalette = document.getElementById('emojiPalette');
+        const emojiCategories = {
+            'Smileys & Emotion': ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾'],
+            'People & Body': ['👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','👨‍🦰','👩‍🦰','👨‍🦱','👩‍🦱','👨‍🦳','👩‍🦳','👨‍🦲','👩‍🦲','👱‍♂️','👱‍♀️','🧓','👴','👵','🙍','🙍‍♂️','🙍‍♀️','🙎','🙎‍♂️','🙎‍♀️','🙅','🙅‍♂️','🙅‍♀️','🙆','🙆‍♂️','🙆‍♀️','💁','💁‍♂️','💁‍♀️','🙋','🙋‍♂️','🙋‍♀️','🧏','🧏‍♂️','🧏‍♀️','🙇','🙇‍♂️','🙇‍♀️','🤦','🤦‍♂️','🤦‍♀️','🤷','🤷‍♂️','🤷‍♀️','👨‍⚕️','👩‍⚕️','👨‍🎓','👩‍🎓','👨‍🏫','👩‍🏫','👨‍⚖️','👩‍⚖️','👨‍🌾','👩‍🌾','👨‍🍳','👩‍🍳','👨‍🔧','👩‍🔧','👨‍🏭','👩‍🏭','👨‍💼','👩‍💼','👨‍🔬','👩‍🔬','👨‍💻','👩‍💻','👨‍🎤','👩‍🎤','👨‍🎨','👩‍🎨','👨‍✈️','👩‍✈️','👨‍🚀','👩‍🚀','👨‍🚒','👩‍🚒','👮','👮‍♂️','👮‍♀️','🕵️','🕵️‍♂️','🕵️‍♀️','💂','💂‍♂️','💂‍♀️','👷','👷‍♂️','👷‍♀️','🤴','👸','👳','👳‍♂️','👳‍♀️','👲','🧕','🤵','👰','🤰','🤱','👩‍🍼','👨‍🍼','🧑‍🍼','👼','🎅','🤶','🧑‍🎄','🦸','🦸‍♂️','🦸‍♀️','🦹','🦹‍♂️','🦹‍♀️','🧙','🧙‍♂️','🧙‍♀️','🧚','🧚‍♂️','🧚‍♀️','🧛','🧛‍♂️','🧛‍♀️','🧜','🧜‍♂️','🧜‍♀️','🧝','🧝‍♂️','🧝‍♀️','🧞','🧞‍♂️','🧞‍♀️','🧟','🧟‍♂️','🧟‍♀️','💆','💆‍♂️','💆‍♀️','💇','💇‍♂️','💇‍♀️','🚶','🚶‍♂️','🚶‍♀️','🧍','🧍‍♂️','🧍‍♀️','🧎','🧎‍♂️','🧎‍♀️','🧑‍🦯','👨‍🦯','👩‍🦯','🧑‍🦼','👨‍🦼','👩‍🦼','🧑‍🦽','👨‍🦽','👩‍🦽','🏃','🏃‍♂️','🏃‍♀️','💃','🕺','🕴️','👯','👯‍♂️','👯‍♀️','🧖','🧖‍♂️','🧖‍♀️','🧗','🧗‍♂️','🧗‍♀️','🤺','🏇','⛷️','🏂','🏌️','🏌️‍♂️','🏌️‍♀️','🏄','🏄‍♂️','🏄‍♀️','🚣','🚣‍♂️','🚣‍♀️','🏊','🏊‍♂️','🏊‍♀️','⛹️','⛹️‍♂️','⛹️‍♀️','🏋️','🏋️‍♂️','🏋️‍♀️','🚴','🚴‍♂️','🚴‍♀️','🚵','🚵‍♂️','🚵‍♀️','🤸','🤸‍♂️','🤸‍♀️','🤼','🤼‍♂️','🤼‍♀️','🤽','🤽‍♂️','🤽‍♀️','🤾','🤾‍♂️','🤾‍♀️','🤹','🤹‍♂️','🤹‍♀️'],
+            'Animals & Nature': ['🐶','🐱','🐭','🐹','🐰','🦊','🦝','🐻','🐼','🦘','🦡','🐨','🐯','🦁','🐮','🐷','🐽','🐸','🐵','🙈','🙉','🙊','🐒','🐔','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦗','🕷️','🕸️','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🐘','🦏','🦛','🐪','🐫','🦙','🦒','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🐐','🦌','🐕','🐩','🐈','🐓','🦃','🕊️','🐇','🐁','🐀','🐿️','🦔','🐾','🐉','🐲','🌵','🎄','🌲','🌳','🌴','🌱','🌿','☘️','🍀','🎍','🎋','🍃','🍂','🍁','🍄','🌾','💐','🌷','🌹','🥀','🌺','🌸','🌼','🌻','🌞','🌝','🌛','🌜','🌚','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔','🌙','🌎','🌍','🌏','💫','⭐','🌟','✨','⚡','☄️','💥','🔥','🌪️','🌈','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','☃️','⛄','🌬️','💨','🌫️','🌊','💧','💦','☔'],
+            'Food & Drink': ['🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🌽','🥕','🧄','🧅','🥔','🍠','🥐','🍞','🥖','🥨','🥯','🥞','🧇','🧀','🍖','🍗','🥩','🥓','🍔','🍟','🍕','🌭','🥪','🌮','🌯','🥙','🧆','🥚','🍳','🥘','🍲','🥣','🥗','🍿','🧈','🧂','🥫','🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🍣','🍤','🍥','🥮','🍡','🥟','🥠','🥡','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍼','🥛','☕','🍵','🍶','🍾','🍷','🍸','🍹','🍺','🍻','🥂','🥃','🥤','🧃','🧉','🧊','🥢','🍽️','🍴','🥄'],
+            'Travel & Places': ['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🚚','🚛','🚜','🛴','🚲','🛵','🏍️','🛺','🚨','🚔','🚍','🚘','🚖','🚡','🚠','🚟','🚃','🚋','🚞','🚝','🚄','🚅','🚈','🚂','🚆','🚇','🚊','🚉','✈️','🛫','🛬','🛩️','💺','🛰️','🚀','🛸','🚁','🛶','⛵','🚤','🛥️','🛳️','⛴️','🚢','⚓','🛟','⛽','🚧','🚦','🚥','🚏','🗺️','🗿','🗽','🗼','🏰','🏯','🏟️','🎡','🎢','🎠','⛲','⛱️','🏖️','🏝️','🏜️','🌋','⛰️','🏔️','🗻','🏕️','⛺','🏠','🏡','🏘️','🏚️','🏗️','🏭','🏢','🏬','🏣','🏤','🏥','🏦','🏨','🏪','🏫','🏩','💒','🏛️','⛪','🕌','🛕','🕍','🕋','⛩️','🛤️','🛣️','🗾','🎑','🏞️','🌅','🌄','🌠','🎇','🎆','🌇','🌆','🏙️','🌃','🌌','🌉','🌁'],
+            'Activities': ['⚽','🏀','🏈','⚾','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','⛳','🪁','🏹','🎣','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🏋️‍♂️','🏋️‍♀️','🤼','🤼‍♂️','🤼‍♀️','🤸','🤸‍♂️','🤸‍♀️','⛹️','⛹️‍♂️','⛹️‍♀️','🤺','🤾','🤾‍♂️','🤾‍♀️','🏌️','🏌️‍♂️','🏌️‍♀️','🏇','🧘','🧘‍♂️','🧘‍♀️','🏄','🏄‍♂️','🏄‍♀️','🏊','🏊‍♂️','🏊‍♀️','🤽','🤽‍♂️','🤽‍♀️','🚣','🚣‍♂️','🚣‍♀️','🧗','🧗‍♂️','🧗‍♀️','🚵','🚵‍♂️','🚵‍♀️','🚴','🚴‍♂️','🚴‍♀️','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️','🎪','🤹','🤹‍♂️','🤹‍♀️','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🪘','🎷','🎺','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮','🕹️','🎰','🎴','🃏','🀄','🎠','🎡','🎢'],
+            'Objects': ['⌚','📱','📲','💻','⌨️','🖥️','🖨️','🖱️','🖲️','🕹️','🗜️','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🎙️','🎚️','🎛️','⏱️','⏲️','⏰','🕰️','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯️','🪔','🔮','💎','⚖️','🦯','🔗','⛓️','🪝','🧰','🧲','⚗️','🧪','🧫','🧬','🔬','🔭','📡','💉','🩸','💊','🩹','🩺','🚪','🛏️','🛋️','🪑','🚽','🚿','🛁','🪞','🪠','🧴','🧷','🧹','🧺','🧻','🧼','🪣','🧽','🧯','🛒','🚬','⚰️','⚱️','🏺','📯','📜','📃','📄','📑','📊','📈','📉','🗒️','🗓️','📆','📅','📇','🗃️','🗳️','🗄️','📋','📁','📂','🗂️','🗞️','📰','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🔗','📎','🖇️','📐','📏','📌','📍','✂️','🖊️','🖋️','✒️','🖌️','🖍️','📝','💼','📁','📂','🗂️','📅','📆','🗓️','📇','🗃️','🗳️','🗄️','📋','📜','📃','📄'],
+            'Symbols': ['❤️','🧡','💛','💚','💙','💜','🤎','🖤','🤍','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🈳','🈂️','🛂','🛃','🛄','🛅','🚹','🚺','🚼','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗','🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔢','#️⃣','*️⃣','⏏️','▶️','⏸️','⏯️','⏹️','⏺️','⏭️','⏮️','⏩','⏪','⏫','⏬','◀️','🔼','🔽','➡️','⬅️','⬆️','⬇️','↗️','↘️','↖️','↙️','↔️','↕️','🔄','↪️','↩️','⤴️','⤵️','🔀','🔁','🔂','🔃','🆗','🔼','🔽','🔃','🔝','🔚','🔙','🔛','🔜'],
+            'Flags': ['🏳️','🏴','🏁','🚩','🏳️‍🌈','🏳️‍⚧️','🇦🇨','🇦🇩','🇦🇪','🇦🇫','🇦🇬','🇦🇮','🇦🇱','🇦🇲','🇦🇴','🇦🇶','🇦🇷','🇦🇸','🇦🇹','🇦🇺','🇦🇼','🇦🇽','🇦🇿','🇧🇦','🇧🇧','🇧🇩','🇧🇪','🇧🇫','🇧🇬','🇧🇭','🇧🇮','🇧🇯','🇧🇱','🇧🇲','🇧🇳','🇧🇴','🇧🇶','🇧🇷','🇧🇸','🇧🇹','🇧🇻','🇧🇼','🇧🇾','🇧🇿','🇨🇦','🇨🇨','🇨🇩','🇨🇫','🇨🇬','🇨🇭','🇨🇮','🇨🇰','🇨🇱','🇨🇲','🇨🇳','🇨🇴','🇨🇷','🇨🇺','🇨🇻','🇨🇼','🇨🇽','🇨🇾','🇨🇿','🇩🇪','🇩🇯','🇩🇰','🇩🇲','🇩🇴','🇩🇿','🇪🇨','🇪🇪','🇪🇬','🇪🇭','🇪🇷','🇪🇸','🇪🇹','🇪🇺','🇫🇮','🇫🇯','🇫🇰','🇫🇲','🇫🇴','🇫🇷','🇬🇦','🇬🇧','🇬🇩','🇬🇪','🇬🇫','🇬🇬','🇬🇭','🇬🇮','🇬🇱','🇬🇲','🇬🇳','🇬🇵','🇬🇶','🇬🇷','🇬🇸','🇬🇹','🇬🇺','🇬🇼','🇬🇾','🇭🇰','🇭🇲','🇭🇳','🇭🇷','🇭🇹','🇭🇺','🇮🇨','🇮🇩','🇮🇪','🇮🇱','🇮🇲','🇮🇳','🇮🇴','🇮🇶','🇮🇷','🇮🇸','🇮🇹','🇯🇪','🇯🇲','🇯🇴','🇯🇵','🎌','🇰🇪','🇰🇬','🇰🇭','🇰🇮','🇰🇲','🇰🇳','🇰🇵','🇰🇷','🇰🇼','🇰🇾','🇰🇿','🇱🇦','🇱🇧','🇱🇨','🇱🇮','🇱🇰','🇱🇷','🇱🇸','🇱🇹','🇱🇺','🇱🇻','🇱🇾','🇲🇦','🇲🇨','🇲🇩','🇲🇪','🇲🇫','🇲🇬','🇲🇭','🇲🇰','🇲🇱','🇲🇲','🇲🇳','🇲🇴','🇲🇵','🇲🇶','🇲🇷','🇲🇸','🇲🇹','🇲🇺','🇲🇻','🇲🇼','🇲🇽','🇲🇾','🇲🇿','🇳🇦','🇳🇨','🇳🇪','🇳🇫','🇳🇬','🇳🇮','🇳🇱','🇳🇴','🇳🇵','🇳🇷','🇳🇺','🇳🇿','🇴🇲','🇵🇦','🇵🇪','🇵🇫','🇵🇬','🇵🇭','🇵🇰','🇵🇱','🇵🇲','🇵🇳','🇵🇷','🇵🇸','🇵🇹','🇵🇼','🇵🇾','🇶🇦','🇷🇪','🇷🇴','🇷🇸','🇷🇺','🇷🇼','🇸🇦','🇸🇧','🇸🇨','🇸🇩','🇸🇪','🇸🇬','🇸🇭','🇸🇮','🇸🇯','🇸🇰','🇸🇱','🇸🇲','🇸🇳','🇸🇴','🇸🇷','🇸🇸','🇸🇹','🇸🇻','🇸🇽','🇸🇾','🇸🇿','🇹🇦','🇹🇨','🇹🇩','🇹🇫','🇹🇬','🇹🇭','🇹🇯','🇹🇰','🇹🇱','🇹🇲','🇹🇳','🇹🇴','🇹🇷','🇹🇹','🇹🇻','🇹🇼','🇹🇿','🇺🇦','🇺🇬','🇺🇲','🇺🇸','🇺🇾','🇺🇿','🇻🇦','🇻🇨','🇻🇪','🇻🇬','🇻🇮','🇻🇳','🇻🇺','🇼🇫','🇼🇸','🇽🇰','🇾🇪','🇾🇹','🇿🇦','🇿🇲','🇿🇼']
+        };
+
+        // Populate Emoji Palette
+        for (const [category, emojis] of Object.entries(emojiCategories)) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category';
+            const title = document.createElement('div');
+            title.className = 'category-title';
+            title.textContent = category;
+            categoryDiv.appendChild(title);
+            emojis.forEach(emoji => {
+                const emojiOption = document.createElement('div');
+                emojiOption.className = 'emoji-option';
+                emojiOption.textContent = emoji;
+                emojiOption.addEventListener('touchstart', touchStartEmoji, { passive: false });
+                emojiOption.addEventListener('mousedown', mouseStartEmoji);
+                categoryDiv.appendChild(emojiOption);
+            });
+            emojiPalette.appendChild(categoryDiv);
+        }
+
+        // Add Task Button
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        addTaskBtn.onclick = () => {
+            emojiPalette.classList.toggle('hidden');
+        };
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.onclick = () => {
+            document.body.classList.toggle('dark-mode');
+        };
+
+        // Undo Functionality
+        const undoBtn = document.getElementById('undoBtn');
+        let undoStack = [];
+        undoBtn.addEventListener('click', () => {
+            if (undoStack.length > 0) {
+                const lastAction = undoStack.pop();
+                if (lastAction.parent.contains(lastAction.element)) {
+                    lastAction.parent.removeChild(lastAction.element);
+                }
+            }
+        });
+        undoBtn.addEventListener('touchstart', (ev) => {
+            ev.preventDefault();
+            undoBtn.click();
+        }, { passive: false });
+
+        // Arrow Up and Arrow Down Buttons
+        const arrowUpBtn = document.getElementById('arrowUpBtn');
+        const arrowDownBtn = document.getElementById('arrowDownBtn');
+
+        arrowUpBtn.addEventListener('click', () => {
+            planner.scrollBy({
+                top: -200,
+                behavior: 'smooth'
+            });
+        });
+        arrowUpBtn.addEventListener('touchstart', (ev) => {
+            ev.preventDefault();
+            arrowUpBtn.click();
+        }, { passive: false });
+
+        arrowDownBtn.addEventListener('click', () => {
+            planner.scrollBy({
+                top: 200,
+                behavior: 'smooth'
+            });
+        });
+        arrowDownBtn.addEventListener('touchstart', (ev) => {
+            ev.preventDefault();
+            arrowDownBtn.click();
+        }, { passive: false });
+
+        // Prevent Default Function
+        function preventDefault(ev) {
+            ev.preventDefault();
+        }
+
+        // Drag and Drop Functions
+        let touchDraggedElement = null;
+
+        function touchStartEmoji(ev) {
+            ev.preventDefault();
+            // Close the emoji palette
+            emojiPalette.classList.add('hidden');
+
+            const touch = ev.touches[0];
+            touchDraggedElement = ev.currentTarget.cloneNode(true);
+            touchDraggedElement.classList.add('emoji');
+            touchDraggedElement.style.position = 'absolute';
+            touchDraggedElement.style.pointerEvents = 'none';
+            touchDraggedElement.style.zIndex = '2000';
+            touchDraggedElement.style.transform = 'translate3d(0,0,0)';
+            document.body.appendChild(touchDraggedElement);
+            moveAt(touch.pageX, touch.pageY);
+
+            function moveAt(pageX, pageY) {
+                touchDraggedElement.style.left = pageX - touchDraggedElement.offsetWidth / 2 + 'px';
+                touchDraggedElement.style.top = pageY - touchDraggedElement.offsetHeight / 2 + 'px';
+            }
+
+            let lastTouchMove = 0;
+            function onTouchMove(ev) {
+                ev.preventDefault();
+                const now = Date.now();
+                if (now - lastTouchMove > 10) {
+                    const touch = ev.touches[0];
+                    moveAt(touch.pageX, touch.pageY);
+                    lastTouchMove = now;
+
+                    // Highlight placeholders
+                    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+                    clearHighlights();
+                    if (elem && elem.classList.contains('placeholder') && !elem.hasChildNodes()) {
+                        elem.classList.add('highlight');
+                    }
+                }
+            }
+            document.addEventListener('touchmove', onTouchMove, { passive: false });
+            touchDraggedElement.addEventListener('touchend', function(ev) {
+                document.removeEventListener('touchmove', onTouchMove);
+                touchDraggedElement.parentNode.removeChild(touchDraggedElement);
+                const touch = ev.changedTouches[0];
+                const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (elem && elem.classList.contains('placeholder') && !elem.hasChildNodes()) {
+                    const emojiElement = touchDraggedElement.cloneNode(true);
+                    emojiElement.style.position = 'absolute';
+                    emojiElement.style.left = '0';
+                    emojiElement.style.top = '0';
+                    emojiElement.style.pointerEvents = 'auto';
+                    emojiElement.addEventListener('touchstart', touchStartEmoji, { passive: false });
+                    elem.appendChild(emojiElement);
+                    undoStack.push({ parent: elem, element: emojiElement });
+                }
+                clearHighlights();
+            }, { once: true });
+        }
+
+        function mouseStartEmoji(ev) {
+            ev.preventDefault();
+            // Close the emoji palette
+            emojiPalette.classList.add('hidden');
+
+            const draggedElement = ev.currentTarget.cloneNode(true);
+            draggedElement.classList.add('emoji');
+            draggedElement.style.position = 'absolute';
+            draggedElement.style.pointerEvents = 'none';
+            draggedElement.style.zIndex = '2000';
+            document.body.appendChild(draggedElement);
+            moveAt(ev.pageX, ev.pageY);
+
+            function moveAt(pageX, pageY) {
+                draggedElement.style.left = pageX - draggedElement.offsetWidth / 2 + 'px';
+                draggedElement.style.top = pageY - draggedElement.offsetHeight / 2 + 'px';
+            }
+
+            function onMouseMove(ev) {
+                moveAt(ev.pageX, ev.pageY);
+                // Highlight placeholders
+                const elem = document.elementFromPoint(ev.clientX, ev.clientY);
+                clearHighlights();
+                if (elem && elem.classList.contains('placeholder') && !elem.hasChildNodes()) {
+                    elem.classList.add('highlight');
+                }
+            }
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', function(ev) {
+                document.removeEventListener('mousemove', onMouseMove);
+                draggedElement.parentNode.removeChild(draggedElement);
+                const elem = document.elementFromPoint(ev.clientX, ev.clientY);
+                if (elem && elem.classList.contains('placeholder') && !elem.hasChildNodes()) {
+                    const emojiElement = draggedElement.cloneNode(true);
+                    emojiElement.style.position = 'absolute';
+                    emojiElement.style.left = '0';
+                    emojiElement.style.top = '0';
+                    emojiElement.style.pointerEvents = 'auto';
+                    emojiElement.addEventListener('mousedown', mouseStartEmoji);
+                    elem.appendChild(emojiElement);
+                    undoStack.push({ parent: elem, element: emojiElement });
+                }
+                clearHighlights();
+            }, { once: true });
+        }
+
+        function clearHighlights() {
+            const highlighted = document.querySelectorAll('.highlight');
+            highlighted.forEach(elem => elem.classList.remove('highlight'));
+        }
+
+        // Hide Emoji Palette on Outside Click
+        document.addEventListener('click', function(event) {
+            if (!emojiPalette.contains(event.target) && !addTaskBtn.contains(event.target)) {
+                emojiPalette.classList.add('hidden');
+            }
+        });
+        document.addEventListener('touchstart', function(event) {
+            if (!emojiPalette.contains(event.target) && !addTaskBtn.contains(event.target)) {
+                emojiPalette.classList.add('hidden');
+            }
+        }, { passive: false });
+    </script>
+</body>
+</html>
